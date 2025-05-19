@@ -1,6 +1,8 @@
 # Peertube-tool
 
-Welcome to a collection of utility scripts designed for PeerTube. While primarily tailored for this platform, some of these scripts may also prove beneficial for other applications.
+Welcome to a collection of utility scripts designed for PeerTube 
+(https://joinpeertube.org/, https://github.com/Chocobozzz/PeerTube). While 
+primarily tailored for this platform, some of these scripts may also prove beneficial for other applications.
 
 To fully utilise the download script, it is essential to configure your own defaults for [yt-dlp](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#configuration) in the `~/yt-dlp.conf` file. In particular, ensure that you set the following option:
 
@@ -10,7 +12,24 @@ To fully utilise the download script, it is essential to configure your own defa
 
 This configuration allows you to route your traffic through your Tor proxy. Without this setup, the scripts may not function as intended.
 
--- Enjoy our privacy and **** Google's >>**Do be evil**<<
+-- Enjoy our privacy and **BLEEP** Google's >>**_Do be evil_**<<
+
+## Requirements
+
+To use these scripts, you will need the following third-party tools. **Please do not** use the versions provided by your operating system; instead, download them directly from the official sources to ensure you have the latest stable and secure versions.
+
+1. **yt-dlp**: You can find it here: [yt-dlp GitHub Repository](https://github.com/yt-dlp/yt-dlp).
+
+2. **FFmpeg**: I recommend using the modified version of FFmpeg provided by yt-dlp for downloading. You can get it from: [yt-dlp FFmpeg Builds](https://github.com/yt-dlp/FFmpeg-Builds). Alternatively, you can use the nightly builds compiled by John Vansickle, available at: [John Vansickle's FFmpeg Builds](https://johnvansickle.com/ffmpeg/).
+
+3. **peertube-cli**: More information can be found here: [PeerTube CLI Documentation](https://docs.joinpeertube.org/support/doc/tools#remote-peertube-cli). Please ensure you configure your PeerTube account in advance, as these scripts are designed to work with a single PeerTube account.
+
+## Support and Contact
+
+For support, please use our tracking-free and privacy-respecting issue platform, sponsored by JetBrains S.R.L.
+
+- For issues related to these tools, please visit: [Tool Issues](https://kb.mypdns.org/projects/TBX/issues).
+- For general inquiries, you can reach us at: [General Inquiries](https://kb.mypdns.org/projects/MPDNS/issues).
 
 ---------------------
 
