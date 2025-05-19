@@ -1,6 +1,10 @@
 # Peertube-tool
 A collection of helper scripts for Peertube. some might be useful for other means
 
+To use the download script in full, you should stull set your own defaults for [yt-dlp](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#configuration) 4) in `~/yt-dlp.conf`. espexialy the `--proxy socks5://localhost:9050` to use your local tor proxy. otherwise this script are up to no good.
+
+-- Enjoy our privacy and **** Google's >>**Do be evil**<<
+
 ---------------------
 
 ## Video Downloader Script
