@@ -1,7 +1,15 @@
 # Peertube-tool
-A collection of helper scripts for Peertube. some might be useful for other means
+# Introduction
 
-To use the download script in full, you should stull set your own defaults for [yt-dlp](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#configuration) 4) in `~/yt-dlp.conf`. espexialy the `--proxy socks5://localhost:9050` to use your local tor proxy. otherwise this script are up to no good.
+Welcome to a collection of utility scripts designed for PeerTube. While primarily tailored for this platform, some of these scripts may also prove beneficial for other applications.
+
+To fully utilise the download script, it is essential to configure your own defaults for [yt-dlp](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#configuration) in the `~/yt-dlp.conf` file. In particular, ensure that you set the following option:
+
+```ini
+--proxy socks5://localhost:9050
+```
+
+This configuration allows you to route your traffic through your Tor proxy. Without this setup, the scripts may not function as intended.
 
 -- Enjoy our privacy and **** Google's >>**Do be evil**<<
 
