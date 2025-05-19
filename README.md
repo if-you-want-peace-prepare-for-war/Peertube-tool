@@ -1,5 +1,4 @@
 # Peertube-tool
-# Introduction
 
 Welcome to a collection of utility scripts designed for PeerTube. While primarily tailored for this platform, some of these scripts may also prove beneficial for other applications.
 
