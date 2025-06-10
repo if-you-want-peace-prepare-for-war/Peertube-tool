@@ -1,18 +1,7 @@
-#!/usr/bin/env bash
-
-#
-# <Program Name>: Video Downloader
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2025. spirillen
-# My Privacy DNS: https://www.mypdns.org/
-# Author: @spirillen url: https://github.com/spirillen
-# License: License: GNU Affero General Public License v3.0 or later
-# License: CC BY-NC-SA 4.0 for data files
-#
-#
+#!/bin/bash
 
 # Version
-version="0.9.2"
+version="0.9.7"
 
 # Function to display help text
 show_help() {
@@ -34,6 +23,9 @@ valid_channels=("audiovideos" "lyricvideos" "musicvideos" "spirillen_musi" "vide
 video_extensions=("webm" "ogv" "ogg" "mp4" "mkv" "mov" "qt" "mqv" "m4v" "flv" "f4v" "wmv" "avi" "3gp" "3gpp" "3g2" "3gpp2" "nut" "mts" "m2ts" "mpv" "m2v" "m1v" "mpg" "mpe" "mpeg" "vob" "mxf" "mp3" "wma" "wav" "flac" "aac" "m4a" "ac3")
 image_extensions=("png" "jpeg" "jpg" "gif" "webp")
 
+# Print version
+# node --trace-deprecation $(which peertube-cli)
+
 # Function to prompt for a valid channel name
 prompt_for_channel() {
     echo "Please select a channel name from the following options:"
@@ -41,9 +33,9 @@ prompt_for_channel() {
         echo "$((i + 1)). ${valid_channels[i]}"
     done
     while true; do
-        read -p "Enter the number corresponding to your choice: " choice
+        read -r -p "Enter the number corresponding to your choice: " choice
         if [[ "$choice" =~ ^[1-5]$ ]]; then
-            channel_name="${valid_channels[$((choice - 1))]}"
+            channel_name="${valid_channels[((choice - 1))]}"
             break
         else
             echo "Invalid choice. Please try again."
@@ -51,16 +43,24 @@ prompt_for_channel() {
     done
 }
 
+peertube-cli() {
+  node --trace-deprecation "$(which peertube-cli)" "$@"
+}
+
 # Parse command-line arguments
 while getopts ":t:c:-:hv" opt; do
     case $opt in
     t) tags="$OPTARG" ;;
     c)
-        # shellcheck disable=SC2076
-        # shellcheck disable=SC2199
-        if [[ " ${valid_channels[@]} " =~ " $OPTARG " ]]; then
-            channel_name="$OPTARG"
-        else
+        found=0
+        for item in "${valid_channels[@]}"; do
+            if [[ "$item" == "$OPTARG" ]]; then
+                found=1
+                channel_name="$OPTARG"
+                break
+            fi
+        done
+        if (( !found )); then
             echo "Invalid channel name: $OPTARG"
             prompt_for_channel
         fi
@@ -68,17 +68,22 @@ while getopts ":t:c:-:hv" opt; do
     -) case "${OPTARG}" in
         tags)
             tags="${!OPTIND}"
-            OPTIND=$(($OPTIND + 1))
+            ((OPTIND=OPTIND+1))
             ;;
         channel-name)
             channel_name="${!OPTIND}"
-            # shellcheck disable=SC2076
-            # shellcheck disable=SC2199
-            if [[ ! " ${valid_channels[@]} " =~ " $channel_name " ]]; then
+            found=0
+            for item in "${valid_channels[@]}"; do
+                if [[ "$item" == "$channel_name" ]]; then
+                    found=1
+                    break
+                fi
+            done
+            if (( !found )); then
                 echo "Invalid channel name: $channel_name"
                 prompt_for_channel
             fi
-            OPTIND=$(($OPTIND + 1))
+            ((OPTIND=OPTIND+1))
             ;;
         help)
             show_help
@@ -128,8 +133,6 @@ for ext in "${video_extensions[@]}"; do
             # Check if the description file exists
             description_file="${base_filename}.description"
             if [[ -f "$description_file" ]]; then
-                # Use sed to process the description file and upload using peertube-cli
-                # description=$(sed ':a;N;$!ba' "$description_file")
                 description=$(cat "$description_file")
 
                 # Determine if a valid image file exists
@@ -141,20 +144,34 @@ for ext in "${video_extensions[@]}"; do
                     fi
                 done
 
-                # Construct the image file path
                 image_file_path="$PWD/$base_filename.$image_file_ext"
 
                 # Upload using peertube-cli only if a valid image is found
                 if [[ -n "$image_file_ext" ]]; then
+                    upload_output=""
                     if [[ -n "$tags" ]]; then
-                        peertube-cli upload -d "$description" -f "$PWD/$filename" \
+                        upload_output=$(peertube-cli upload -d "$description" -f "$PWD/$filename" \
                             -n "$base_filename" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
-                            -b "$image_file_path" -t "$tags"
+                            -b "$image_file_path" -t "$tags" --verbose 4 2>&1)
                     else
-                        peertube-cli upload -d "$description" -f "$PWD/$filename" \
+                        upload_output=$(peertube-cli upload -d "$description" -f "$PWD/$filename" \
                             -n "$base_filename" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
-                            -b "$image_file_path"
+                            -b "$image_file_path" --verbose 4 2>&1)
                     fi
+
+                    # Check for success message and delete files if successful
+                    if [[ "$upload_output" == *"Video $base_filename uploaded."* ]]; then
+                        printf "Upload successful. Deleting\n  - $filename\n  - $description_file\n"
+                        rm -f -- "$filename" "$description_file"
+                    else
+                        echo "Upload failed for $base_filename. Output:"
+                        echo "$upload_output"
+                        echo
+                    fi
+
+                    # Add a 5-second countdown in random rainbow colors between uploads
+                    for i in {10..1}; do
+                        color=$((RANDOM % 7 + 31)); printf "\033[1;${color}m%ds \033[0m" "$i"; sleep 1; done; echo
                 else
                     echo "No valid image files were found for $base_filename."
                 fi
