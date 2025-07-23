@@ -1,17 +1,19 @@
 #!/bin/bash
 
 # Version
-version="0.9.7"
+version="0.10.1"
 
 # Function to display help text
 show_help() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  -t, --tags <tags>          Comma-separated list of tags to add to the upload."
-    echo "  -c, --channel-name <name>  Specify the channel name for the upload."
-    echo "  -h, --help                 Display this help message."
-    echo "  -v, --version              Show the version of the script."
+    echo "  -t, --tags <tags>             Comma-separated list of tags to add to the upload."
+    echo "  -c, --channel-name <name>     Specify the channel name for the upload."
+    echo "  --skip-description-check      Skip checking for the description file."
+    echo "  --skip-image-check            Skip checking for image files."
+    echo "  -h, --help                    Display this help message."
+    echo "  -v, --version                 Show the version of the script."
     echo ""
     echo "This script uploads video files to PeerTube using peertube-cli."
 }
@@ -19,12 +21,11 @@ show_help() {
 # Initialize variables
 tags=""
 channel_name="" # Initialize channel name as empty
-valid_channels=("audiovideos" "lyricvideos" "musicvideos" "spirillen_musi" "videos")
+skip_description_check=0
+skip_image_check=0
+valid_channels=("audiovideos" "lyricvideos" "musicvideos" "spirillen_musi" "videos" "nsfw")
 video_extensions=("webm" "ogv" "ogg" "mp4" "mkv" "mov" "qt" "mqv" "m4v" "flv" "f4v" "wmv" "avi" "3gp" "3gpp" "3g2" "3gpp2" "nut" "mts" "m2ts" "mpv" "m2v" "m1v" "mpg" "mpe" "mpeg" "vob" "mxf" "mp3" "wma" "wav" "flac" "aac" "m4a" "ac3")
 image_extensions=("png" "jpeg" "jpg" "gif" "webp")
-
-# Print version
-# node --trace-deprecation $(which peertube-cli)
 
 # Function to prompt for a valid channel name
 prompt_for_channel() {
@@ -34,7 +35,7 @@ prompt_for_channel() {
     done
     while true; do
         read -r -p "Enter the number corresponding to your choice: " choice
-        if [[ "$choice" =~ ^[1-5]$ ]]; then
+        if [[ "$choice" =~ ^[1-6]$ ]]; then
             channel_name="${valid_channels[((choice - 1))]}"
             break
         else
@@ -43,77 +44,60 @@ prompt_for_channel() {
     done
 }
 
-peertube-cli() {
+pcli() {
   node --trace-deprecation "$(which peertube-cli)" "$@"
 }
 
 # Parse command-line arguments
-while getopts ":t:c:-:hv" opt; do
-    case $opt in
-    t) tags="$OPTARG" ;;
-    c)
-        found=0
-        for item in "${valid_channels[@]}"; do
-            if [[ "$item" == "$OPTARG" ]]; then
-                found=1
-                channel_name="$OPTARG"
-                break
-            fi
-        done
-        if (( !found )); then
-            echo "Invalid channel name: $OPTARG"
-            prompt_for_channel
-        fi
-        ;;
-    -) case "${OPTARG}" in
-        tags)
-            tags="${!OPTIND}"
-            ((OPTIND=OPTIND+1))
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -t|--tags)
+            tags="$2"
+            shift 2
             ;;
-        channel-name)
-            channel_name="${!OPTIND}"
+        -c|--channel-name)
             found=0
             for item in "${valid_channels[@]}"; do
-                if [[ "$item" == "$channel_name" ]]; then
+                if [[ "$item" == "$2" ]]; then
                     found=1
+                    channel_name="$2"
                     break
                 fi
             done
             if (( !found )); then
-                echo "Invalid channel name: $channel_name"
+                echo "Invalid channel name: $2"
                 prompt_for_channel
             fi
-            ((OPTIND=OPTIND+1))
+            shift 2
             ;;
-        help)
+        --skip-description-check)
+            skip_description_check=1
+            shift
+            ;;
+        --skip-image-check)
+            skip_image_check=1
+            shift
+            ;;
+        -h|--help)
             show_help
             exit 0
             ;;
-        version)
+        -v|--version)
             echo "$version"
             exit 0
             ;;
-        *)
-            echo "Invalid option: --${OPTARG}" >&2
+        --)
+            shift
+            break
+            ;;
+        -*)
+            echo "Invalid option: $1" >&2
             exit 1
             ;;
-        esac ;;
-    h)
-        show_help
-        exit 0
-        ;;
-    v)
-        echo "$version"
-        exit 0
-        ;;
-    \?)
-        echo "Invalid option: -$OPTARG" >&2
-        exit 1
-        ;;
-    :)
-        echo "Option -$OPTARG requires an argument." >&2
-        exit 1
-        ;;
+        *)
+            # Not an option, break for positional arguments
+            break
+            ;;
     esac
 done
 
@@ -127,57 +111,86 @@ for ext in "${video_extensions[@]}"; do
     for filename in *."$ext"; do
         # Check if the file exists to avoid errors
         if [[ -f "$filename" ]]; then
-            # Remove the file extension to get the base filename
             base_filename="${filename%.*}"
 
-            # Check if the description file exists
             description_file="${base_filename}.description"
-            if [[ -f "$description_file" ]]; then
-                description=$(cat "$description_file")
+            description=""
+            # Check if the description file exists, unless skipped
+            if [[ $skip_description_check -eq 0 ]]; then
+                if [[ -f "$description_file" ]]; then
+                    description=$(cat "$description_file")
+                else
+                    echo "Description file $description_file does not exist."
+                    continue
+                fi
+            else
+                # Use empty description if skipping
+                description=""
+            fi
 
+            image_file_ext=""
+            image_file_path=""
+            if [[ $skip_image_check -eq 0 ]]; then
                 # Determine if a valid image file exists
-                image_file_ext=""
                 for img_ext in "${image_extensions[@]}"; do
                     if [[ -f "$PWD/$base_filename.$img_ext" ]]; then
                         image_file_ext="$img_ext"
                         break
                     fi
                 done
-
                 image_file_path="$PWD/$base_filename.$image_file_ext"
 
-                # Upload using peertube-cli only if a valid image is found
-                if [[ -n "$image_file_ext" ]]; then
-                    upload_output=""
-                    if [[ -n "$tags" ]]; then
-                        upload_output=$(peertube-cli upload -d "$description" -f "$PWD/$filename" \
-                            -n "$base_filename" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
-                            -b "$image_file_path" -t "$tags" --verbose 4 2>&1)
-                    else
-                        upload_output=$(peertube-cli upload -d "$description" -f "$PWD/$filename" \
-                            -n "$base_filename" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
-                            -b "$image_file_path" --verbose 4 2>&1)
-                    fi
-
-                    # Check for success message and delete files if successful
-                    if [[ "$upload_output" == *"Video $base_filename uploaded."* ]]; then
-                        printf "Upload successful. Deleting\n  - $filename\n  - $description_file\n"
-                        rm -f -- "$filename" "$description_file"
-                    else
-                        echo "Upload failed for $base_filename. Output:"
-                        echo "$upload_output"
-                        echo
-                    fi
-
-                    # Add a 5-second countdown in random rainbow colors between uploads
-                    for i in {10..1}; do
-                        color=$((RANDOM % 7 + 31)); printf "\033[1;${color}m%ds \033[0m" "$i"; sleep 1; done; echo
-                else
+                if [[ -z "$image_file_ext" ]]; then
                     echo "No valid image files were found for $base_filename."
+                    continue
+                fi
+            fi
+
+            upload_output=""
+            # Build the upload command
+            if [[ $skip_image_check -eq 0 ]]; then
+                # With image
+                if [[ -n "$tags" ]]; then
+                    upload_output=$(pcli upload -d "$description" -f "$PWD/$filename" \
+                        -n "$base_filename" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
+                        -b "$image_file_path" -t "$tags" --verbose 4 2>&1)
+                else
+                    upload_output=$(pcli upload -d "$description" -f "$PWD/$filename" \
+                        -n "$base_filename" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
+                        -b "$image_file_path" --verbose 4 2>&1)
                 fi
             else
-                echo "Description file $description_file does not exist."
+                # Without image
+                if [[ -n "$tags" ]]; then
+                    upload_output=$(pcli upload -d "$description" -f "$PWD/$filename" \
+                        -n "$base_filename" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
+                        -t "$tags" --verbose 4 2>&1)
+                else
+                    upload_output=$(pcli upload -d "$description" -f "$PWD/$filename" \
+                        -n "$base_filename" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
+                        --verbose 4 2>&1)
+                fi
             fi
+
+            # Check for success message and delete files if successful
+            if [[ "$upload_output" == *"Video $base_filename uploaded."* ]]; then
+                echo -e "Upload successful. Deleting\n  - $filename"
+                rm -f -- "$filename"
+                if [[ $skip_description_check -eq 0 ]]; then
+                    echo "  - $description_file"
+                    rm -f -- "$description_file"
+                fi
+                echo
+            else
+                echo "Upload failed for $base_filename. Output:"
+                echo "$upload_output"
+                echo
+            fi
+
+            # Add a 5-second countdown in random rainbow colors between uploads
+            for i in {10..1}; do
+                color=$((RANDOM % 7 + 31)); printf "\033[1;${color}m%ds \033[0m" "$i"; sleep 1; done; echo
+
         fi
     done
 done
