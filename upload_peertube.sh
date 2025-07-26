@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-version="0.10.1"
+version="0.10.2"
 
 # Function to display help text
 show_help() {
@@ -117,10 +117,10 @@ for ext in "${video_extensions[@]}"; do
             description=""
             # Check if the description file exists, unless skipped
             if [[ $skip_description_check -eq 0 ]]; then
-                if [[ -f "$description_file" ]]; then
-                    description=$(cat "$description_file")
+                if [[ -f "${description_file}" ]]; then
+                    description=$(cat "${description_file}")
                 else
-                    echo "Description file $description_file does not exist."
+                    echo "Description file ${description_file} does not exist."
                     continue
                 fi
             else
@@ -133,15 +133,15 @@ for ext in "${video_extensions[@]}"; do
             if [[ $skip_image_check -eq 0 ]]; then
                 # Determine if a valid image file exists
                 for img_ext in "${image_extensions[@]}"; do
-                    if [[ -f "$PWD/$base_filename.$img_ext" ]]; then
+                    if [[ -f "$PWD/${base_filename}.$img_ext" ]]; then
                         image_file_ext="$img_ext"
                         break
                     fi
                 done
-                image_file_path="$PWD/$base_filename.$image_file_ext"
+                image_file_path="$PWD/${base_filename}.$image_file_ext"
 
                 if [[ -z "$image_file_ext" ]]; then
-                    echo "No valid image files were found for $base_filename."
+                    echo "No valid image files were found for ${base_filename}."
                     continue
                 fi
             fi
@@ -151,38 +151,38 @@ for ext in "${video_extensions[@]}"; do
             if [[ $skip_image_check -eq 0 ]]; then
                 # With image
                 if [[ -n "$tags" ]]; then
-                    upload_output=$(pcli upload -d "$description" -f "$PWD/$filename" \
-                        -n "$base_filename" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
-                        -b "$image_file_path" -t "$tags" --verbose 4 2>&1)
+                    upload_output=$(pcli upload -d "${description}" -f "$PWD/${filename}" \
+                        -n "${base_filename}" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
+                        -b "{$image_file_path}" -t "$tags" --verbose 4 2>&1)
                 else
-                    upload_output=$(pcli upload -d "$description" -f "$PWD/$filename" \
-                        -n "$base_filename" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
-                        -b "$image_file_path" --verbose 4 2>&1)
+                    upload_output=$(pcli upload -d "${description}" -f "$PWD/${filename}" \
+                        -n "${base_filename}" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
+                        -b "${image_file_path}" --verbose 4 2>&1)
                 fi
             else
                 # Without image
                 if [[ -n "$tags" ]]; then
-                    upload_output=$(pcli upload -d "$description" -f "$PWD/$filename" \
-                        -n "$base_filename" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
+                    upload_output=$(pcli upload -d "${description}" -f "$PWD/${filename}" \
+                        -n "{$base_filename}" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
                         -t "$tags" --verbose 4 2>&1)
                 else
-                    upload_output=$(pcli upload -d "$description" -f "$PWD/$filename" \
-                        -n "$base_filename" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
+                    upload_output=$(pcli upload -d "${description}" -f "$PWD/${filename}" \
+                        -n "${base_filename}" -c 1 -l 4 -L en -P 3 -C "$channel_name" \
                         --verbose 4 2>&1)
                 fi
             fi
 
             # Check for success message and delete files if successful
-            if [[ "$upload_output" == *"Video $base_filename uploaded."* ]]; then
-                echo -e "Upload successful. Deleting\n  - $filename"
-                rm -f -- "$filename"
+            if [[ "$upload_output" == *"Video ${base_filename} uploaded."* ]]; then
+                echo -e "Upload successful. Deleting\n  - ${filename}"
+                rm -f -- "${filename}"
                 if [[ $skip_description_check -eq 0 ]]; then
-                    echo "  - $description_file"
-                    rm -f -- "$description_file"
+                    echo "  - ${description_file}"
+                    rm -f -- "${description_file}"
                 fi
                 echo
             else
-                echo "Upload failed for $base_filename. Output:"
+                echo "Upload failed for ${base_filename}. Output:"
                 echo "$upload_output"
                 echo
             fi
