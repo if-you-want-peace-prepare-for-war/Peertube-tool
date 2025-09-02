@@ -1,0 +1,26 @@
+# Changelog
+
+## [1.2.0] - 2025-09-02
+### Changed
+- Spinner animation for downloads is now plain `-\|/` and does not use colour.
+- Download and retry indicators now reuse the same terminal line (no new lines for spinner or retry counter).
+- The "Downloading:" message now prints the scrubbed/cleaned URL, not the raw input.
+- Various shellcheck compliance improvements throughout the script.
+- Version bumped to `1.2.0`.
+
+### Fixed
+- Trap-only function `cleanup` is annotated with `# shellcheck disable=SC2317` to silence shellcheck unreachable warnings.
+- All user and option parsing is robust and shellcheck-compliant.
+
+---
+
+## [master] (previous main version, e.g. `1.1.3`
+### Changed
+- Spinner animation used colours for the entire spinner character.
+- Retry countdown used colour for the entire line, not just the number.
+- "Downloading:" message printed the raw URL, not the scrubbed one.
+- Some shellcheck warnings may have been present.
+- Version was `1.1.3`.
+
+### Fixed
+- General shellcheck compliance improvements introduced in newer version (`v5`).
