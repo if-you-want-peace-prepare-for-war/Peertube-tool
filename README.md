@@ -36,27 +36,88 @@ For support, please use our tracking-free and privacy-respecting issue platform,
 ## Video Downloader Script
 ### Introduction
 
-Welcome to the Video Downloader script, a powerful and flexible tool designed for both seasoned system administrators and aspiring tech enthusiasts. This Bash script leverages the capabilities of `yt-dlp`, a popular command-line utility for downloading videos from various platforms, and integrates it with `ffmpeg` for enhanced media processing. Whether you're looking to archive your favorite videos, create a personal media library, or simply experiment with video downloading, this script provides a straightforward yet robust solution.
+Welcome to the Video Downloader script — a compact, robust Bash utility that uses yt-dlp for fetching videos and ffmpeg for post-processing. It's designed for both experienced sysadmins and newcomers: configurable, shellcheck-friendly, and suitable for single-URL downloads or batch lists.
 
-### Deeper Dive
 
-The Video Downloader script is structured to cater to a wide range of users, from experienced system admins who appreciate the nuances of command-line tools to newcomers eager to learn. At its core, the script is designed to download videos from specified URLs or from a list contained in a file, making it versatile for different use cases.
+### What’s new in 1.2.0
 
-#### Key Features:
+- **Version:** **1.2.0** (2025-09-02)
+- Spinner and retry UI simplified to a plain ASCII spinner (`-\|/`) and now reuse a single terminal line for progress and retry indicators to reduce noisy output.
+- The script now prints the **scrubbed (cleaned) URL** in the "Downloading:" line (no raw input shown).
+- Multiple shellcheck compliance improvements and parsing robustness fixes.
+- Minor internal fixes (see changelog).
 
-1. **Dynamic Path Management**: The script automatically adds user-specific binary directories (`~/.local/bin` and `~/bin`) to the `PATH`, ensuring that custom installations of `ffmpeg` and `yt-dlp` are recognized without additional configuration.
 
-2. **Error Handling and Retry Logic**: Robust error handling is implemented to manage common issues such as HTTP errors or geographical restrictions. The script includes a retry mechanism that waits for a random interval before attempting to download again, which can be particularly useful when dealing with rate limits or temporary server issues.
+### Features
 
-3. **Customizable Output**: Users can specify the output filename format, allowing for organized storage of downloaded videos. The script supports various subtitle languages and formats, enhancing accessibility for users who prefer or require subtitles.
+1. Dynamic PATH management: automatically prepends user-specific binary directories (`~/.local/bin` and `~/bin`) so local installs of `yt-dlp` or `ffmpeg` are found without extra setup.
+2. Robust error handling and retry logic: handles common HTTP/geolocation issues and retries with randomized backoff to mitigate transient failures and rate limits.
+3. Customizable output naming: configure output filename templates for consistent library organization.
+4. Subtitle support: download subtitles in specified languages and formats.
+5. Clean terminal UI: progress, spinner, and retry messages reuse the same terminal line for a tidy output experience.
+6. ffmpeg integration: convert/normalize media, generate thumbnails, or adjust audio/video parameters after download.
 
-4. **Command-Line Options**: The script provides a user-friendly interface with clear command-line options for specifying URLs, reading from a file, and displaying help or version information. This makes it easy for users to get started without needing to dive deep into the code.
 
-5. **Real-Time Feedback**: As videos are downloaded, users receive real-time feedback in the terminal, including progress updates and error messages, which helps in monitoring the download process effectively.
+### Requirements
 
-6. **Compatibility with `ffmpeg`**: The integration with `ffmpeg` allows for advanced processing of downloaded media, such as converting thumbnail formats and managing audio quality, making this script not just a downloader but a comprehensive media management tool.
+- bash (POSIX-compatible; tested with bash v4+)
+- yt-dlp
+- ffmpeg (optional, required for conversion/thumbnail tasks)
+- coreutils (standard on most Linux/macOS systems)
 
-In summary, the Video Downloader script is a well-crafted tool that balances functionality and ease of use, making it suitable for both experienced users and those new to the world of video downloading. With its robust features and user-friendly design, it empowers users to take control of their media consumption in a way that is both efficient and effective.
+
+### Quick start
+
+1. Ensure dependencies are installed (example):
+    - yt-dlp: pip install -U yt-dlp or use packaged release
+    - ffmpeg: package manager or static build
+2. Make the script executable:
+    ```shell
+    chmod +x video-downloader.sh
+    ```
+3. Single URL:
+    ```shell
+    ./video-downloader.sh -u "https://example.com/watch?v=abc123"
+    ```
+4. From a file (one URL per line):
+    ```shell
+    ./video-downloader.sh -f urls.txt
+    ```
+5. Show help:
+    ```shell
+    ./video-downloader.sh -h
+    ```
+
+
+### CLI options (common)
+
+- -u, --url <URL>         Download a single URL
+- -f, --file <FILE>       Read list of URLs from FILE (one per line)
+- -o, --output <TEMPLATE> Set yt-dlp output template
+- -s, --sub-lang <LANG>   Download subtitles for language (comma-separated)
+- -v, --version           Print script version (now **1.2.0**)
+- -h, --help              Display usage information
+
+(Exact flags and behavior are implemented in-script; run -h for the complete list.)
+
+
+### Behavior & UX notes
+
+- The script sanitizes and prints a cleaned URL when starting a download to avoid exposing raw user input or extraneous whitespace.
+- Terminal feedback (spinner/retry) is intentionally minimal and uses a single-line spinner `-\|/` for broad compatibility (no colour).
+- Retry attempts display on the same line to avoid flooding logs with transient failure messages.
+
+
+### Development & compliance
+
+- Script aims for strong shellcheck compliance; notable annotations remain where traps or intentionally-unreachable functions would otherwise raise warnings (explicitly annotated with shellcheck disables where required).
+- Contributions and issues: please follow the repository’s contributing guidelines and include shellcheck output for any changes that affect parsing or error handling.
+
+
+### Changelog (summary)
+
+- 1.2.0 (2025-09-02): UI simplification (plain spinner, single-line reuse), scrubbed URL printing, shellcheck/hardening improvements, version bump.
+- previous main (1.1.3): The basics to repeatedly retry download fro youtube
 
 ---------------------
 
